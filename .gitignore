@@ -1,7 +1,7 @@
 # Игнорировать все файлы и папки
 *
 
-# Отслеживание package.json
+# Включить отслеживание package.json
 #!package.json
 !.gitignore
 
@@ -13,6 +13,6 @@
 !/src/era/blacklist/services/
 !/src/era/blacklist/services/MainService.ts
 
-# Отслеживать все файлы внутри папки src/era/blacklist/services/
+# Отслеживание всего внутри папки src/era/blacklist/services/
 #!/src/era/blacklist/services/**
 
