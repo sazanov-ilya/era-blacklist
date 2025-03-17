@@ -5,11 +5,9 @@
 #!package.json
 !.gitignore
 
-# Отслеживание src/index.ts
-#!/src/
+# /--/ MainService.ts
+!/src/
 #!/src/index.ts
-
-# Отслеживание src/era/blacklist/services/MainService.ts
 !/src/era/
 !/src/era/blacklist/
 !/src/era/blacklist/services/
