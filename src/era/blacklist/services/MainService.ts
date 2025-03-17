@@ -10,7 +10,6 @@ import { DataFactory, FilterBuilder } from "../../data/model";
 import { IInvocation } from "../../platform/model";
 
 class MainService extends Service {
-
     constructor() {
         super("blacklist.MainService");
 
@@ -40,7 +39,8 @@ class MainService extends Service {
         this._blacklistRecommendeds.onAfterUpdate(this.afterUpdateBlacklistRecommendeds.bind(this));
 
 
-        // Дата/время для часового таймера (обновляется каждый час)
+        // Дата/время для часового таймера
+        // (обновляется каждый час)
         this._hourInterval = GlobalUtils.nowTimeStamp();
 
 
@@ -60,7 +60,7 @@ class MainService extends Service {
             // onInitCode
 
             // 1. Вывод сообщения о запуске
-            const message_init: string = '!!! blacklist.MainServise.ts -> onInit';
+            const message_init: string = '### blacklist.MainServise.ts -> onInit';
             //console.log(message_init);          
             this.log.info(message_init);
 
@@ -79,8 +79,8 @@ class MainService extends Service {
 
 
             const now = GlobalUtils.nowTimeStamp();
-            //const oneHour = 3600000; // 1 час в миллисекундах
-            const oneHour = 60000; // 1 минута
+            const oneHour = 3600000; // 1 час в миллисекундах
+            //const oneHour = 60000; // 1 минута
 
             // Прошел 1 час?
             if (now - this._hourInterval > oneHour) {
@@ -89,12 +89,7 @@ class MainService extends Service {
 
                 this.deleteTempPhonesFromBlacklist();             // Удаление временных номеров
                 this._hourInterval = GlobalUtils.nowTimeStamp();  // Переопределение времени
-
-                //this.log.debug("onTimer -> this.startTime", this.startTime);
             }
-            //this.log.debug("onTimer -> this.startTime", this.startTime);
-
-
         }
         catch (e) {
             this.log.exception("onTimer", e);
@@ -137,9 +132,8 @@ class MainService extends Service {
 
                     // 2. Проверяем и закрываем в "Рекомендовано для ЧС"
                     await this.closeInRecommended(phone);
-                }
-
-            } // params_.updateKind
+                } // if (modifierId
+            } // if (params_.updateKind
         }
         catch (e) {
             this.log.exception('afterUpdateBlacklists', e);
@@ -180,30 +174,25 @@ class MainService extends Service {
                     // 2. Если номер уже в ЧС, то закрываем как обработанный
                     const existsBlacklist = await this.checkPhoneByBlacklist(phone);
                     if (existsBlacklist) {
-                        // 2. Проверяем и ТОЛЬКО закрываем в "Рекомендовано для ЧС"
+                        // 2.1. Проверяем и ТОЛЬКО закрываем в "Рекомендовано для ЧС"
                         await this.closeInRecommended(phone, 'Номер уже в ЧС');
                     }
                     else {
-
                         // 3. Проверка числа рекомендаций для добавления в ЧС
                         const countRecommendeds = await this.getCountRecommendeds(phone)
                         this.log.debug('afterUpdateBlacklistRecommendeds ->  countRecommendeds: ', countRecommendeds);
 
                         if (countRecommendeds >= 5) {
-                            // 3.1. ПРОВЕРЯЕМ тип ЧС для "по числу рекомендаций"
-
+                            // 3.1. ПРОВЕРЯЕМ тип ЧС
                             const code: string = 'by_count_recommends'
-
-                            if (await this.checkExistBlacklistType(code)) {
-
+                            if (await this.checkExistBlacklistType(code)) { // Если есть тип ЧС
                                 // Добавляем в ЧС
                                 await this.addToBlacklist_tst(phone, code, modifierId, 'Добавлен в ЧС по числу рекомендаций')
                                 //await this.closeInRecommended(phone);
-                            } else {
+                            } else { // Если нет типа ЧС
                                 const name = 'По числу рекомендаций';
                                 const isPermanent = false;
                                 const blockTime = 86400 // 1 день
-
                                 // Добавляем тип ЧС и ЧС
                                 await this.addToBlackListType(code, name, isPermanent, blockTime)
                                 await this.addToBlacklist_tst(phone, code, modifierId, 'Добавлен в ЧС по числу рекомендаций')
@@ -276,7 +265,7 @@ class MainService extends Service {
     }
 
 
-    // Проедура -> помечает "Рекомендованно для ЧС" как обработанные
+    // Процедура -> помечает "Рекомендованно для ЧС" как обработанные
     async closeInRecommended(phone: string, comment?: string) {
         //this.log.debug('closeInRecommended -> params', { phone, comment });
 
@@ -285,10 +274,10 @@ class MainService extends Service {
                 let blacklistRecommendedsTmp = new BlacklistRecommendeds(this.context);
                 let filter = FilterBuilder.and(FilterBuilder.equals("phone", phone), FilterBuilder.equals("isAdded", false));
                 const blacklistRecommendeds = await blacklistRecommendedsTmp.loadAll({ select: { filter } });
-                this.log.debug('closeInRecommended -> blacklistRecommendeds', blacklistRecommendeds);
+                //this.log.debug('closeInRecommended -> blacklistRecommendeds', blacklistRecommendeds);
 
                 if (blacklistRecommendeds.length > 0) { // Закрываем все что есть
-                    this.log.debug('closeInRecommended -> уже есть в ЧС', { phone });
+                    //this.log.debug('closeInRecommended -> закрываем все рекомендации для', { phone });
                     for (let blacklistRecommended_ of blacklistRecommendeds) {
                         blacklistRecommended_.isAdded = true;
                         if (comment) { // Добавляем новый комментарий к текущему
@@ -306,7 +295,7 @@ class MainService extends Service {
     }
 
 
-    // Проедура -> проверка номера телефона по ЧС (true/false)
+    // Процедура -> проверка номера телефона по ЧС (true/false)
     async checkPhoneByBlacklist(phone: string): Promise<boolean> {
         //this.log.debug('checkPhoneByBlacklist -> phone: ', phone);
 
@@ -333,56 +322,6 @@ class MainService extends Service {
         }
     }
 
-    // Процедура -> добавляет новый номер в "ЧС"
-    async addToBlacklist_tst(phone: string, type_code: string, user_id: string | undefined, comment: string) {
-        //this.log.debug('addToBlacklist -> params', { phone, type_code, user_id, comment })
-
-        try {
-            let blacklistType: IBlackListType | undefined; // Тип ЧС 
-            let user: IRootUser | undefined;               // Пользователь
-            [blacklistType, user] = await Promise.all([    // Ускоряем через параллельный вызов
-                this.getBlacklistType(type_code),
-                this.getUser(user_id)
-            ]);
-
-            // 1. Проверка на обязательные параметры
-            if (phone.trim().length === 0 || !blacklistType || !user) {
-                this.log.exception('addToBlacklist -> нет ключевых параметров', JSON.stringify({
-                    phone,
-                    type_code,
-                    user_id,
-                    comment,
-                    blacklistType: !!blacklistType,
-                    user: !!user
-                }));
-                return; // ОБРЫВАЕМ,если не достаточно парметров
-            } else {
-                //this.log.debug('addToBlacklist -> номер уже в ЧС!', { phone, type_code, user_id, comment })
-            }
-
-            // 2. Проверка по ЧС
-            const existsBlacklist = await this.checkPhoneByBlacklist(phone);
-
-            if (!existsBlacklist) {                           // Если номера НЕТ в ЧС
-                await this._blacklists.addNew(blacklist_ => { // Добавление в ЧС
-                    blacklist_.insertDttm = new Date();
-                    blacklist_.type = blacklistType!; // Утверждаем, что blacklistType не undefined
-                    blacklist_.phone = phone;
-                    blacklist_.user = user;
-                    blacklist_.comment = comment;
-                });
-            }
-            //// Закрываем в "Рекомендованно для ЧС"
-            ////await this.closeInRecommended(phone, comment ? comment : undefined);
-            await this.closeInRecommended(phone);
-        }
-        catch (e) {
-            this.log.exception('addToBlacklist', e);
-        }
-    }
-
-    ///
-    ///
 
     // Процедура -> добавление нового типа ЧС
     async addToBlackListType(code: string, name: string, is_permanent: boolean, block_time: number) {
@@ -402,10 +341,8 @@ class MainService extends Service {
         }
     }
 
-    ///
-    ///
 
-    // Проедура -> возвращает число рекомендаций для добавления в ЧС
+    // Процедура -> возвращает число рекомендаций для добавления в ЧС
     async getCountRecommendeds(phone: string): Promise<number> {
         //this.log.debug('getCountRecommendeds -> phone: ', phone);
 
@@ -450,32 +387,109 @@ class MainService extends Service {
     }
 
 
+    // Процедура -> добавляет новый номер в "Рекомендовать для ЧС"
+    async addToBlacklistRecommended(seance_id: string, phone: string, user_id: string | undefined, comment: string) {
+        //this.log.debug('addToBlacklist -> params', { phone, type_code, user_id, comment })
+
+        try {
+            let user: IRootUser | undefined;  // Пользователь
+            [user] = await Promise.all([      // Ускоряем через параллельный вызов
+                this.getUser(user_id)
+            ]);
+
+            // 1. Проверка на обязательные параметры
+            if (phone.trim().length === 0 || !user) {
+                this.log.exception('addToBlacklistRecommended -> нет ключевых параметров', JSON.stringify({
+                    phone,
+                    user_id,
+                    comment,
+                    user: !!user
+                }));
+                return; // ОБРЫВАЕМ, если не достаточно парметров
+            } else {
+                //this.log.debug('...', ...)
+            }
+
+            // 2. Добавление в "Рекомендовать для ЧС"
+            await this._blacklistRecommendeds.addNew(blacklistRecommended_ => { // Добавление ...
+                blacklistRecommended_.seanceId = seance_id;
+                blacklistRecommended_.insertDttm = new Date();
+                blacklistRecommended_.phone = phone;
+                blacklistRecommended_.user = user;
+                blacklistRecommended_.comment = comment;
+            });
+        }
+        catch (e) {
+            this.log.exception('addToBlacklist', e);
+        }
+    }
+
+
     // Процедура -> кнопки "Рекомендовать для ЧС"
     async buttonAddToBlacklistRecommended(invocation_: IInvocation) {
         this.log.debug('buttonAddToBlacklistRecommended -> invocation_', invocation_);
 
-
         try {
-            /*
-            const phone = invocation_.request?.phone;
-            const user_id = invocation_.request?.user;
-    
-            this.log.debug('phone', phone);
-            this.log.debug('user_id', user_id);
-    
-            // Добавляем в "Рекомендовано для ЧС"
-            await this.addToRecommendedBlacklist(phone, user_id)
-            //this.log.debug('buttonAddToBlacklist -> invocation_', '### END');
-    
-            // 2. Пверка числа рекомендаций для обавления в ЧС
-            await this.checkAndAddToBlacklist(phone, user_id)
-            */
+            const { parameters, user_id } = invocation_.request?.request || {};
+            const { seance_id, phone, comment } = parameters || {};
+
+            await this.addToBlacklistRecommended(seance_id, phone, user_id, comment)
+
             return true;
         }
         catch (e) {
             this.log.exception('buttonAddToBlacklistRecommended', e);
 
             return false;
+        }
+    }
+
+
+    // Процедура -> добавляет новый номер в "ЧС"
+    async addToBlacklist_tst(phone: string, type_code: string, user_id: string | undefined, comment: string) {
+        //this.log.debug('addToBlacklist -> params', { phone, type_code, user_id, comment })
+
+        try {
+            let blacklistType: IBlackListType | undefined; // Тип ЧС 
+            let user: IRootUser | undefined;               // Пользователь
+            [blacklistType, user] = await Promise.all([    // Ускоряем через параллельный вызов
+                this.getBlacklistType(type_code),
+                this.getUser(user_id)
+            ]);
+
+            // 1. Проверка на обязательные параметры
+            if (phone.trim().length === 0 || !blacklistType || !user) {
+                this.log.exception('addToBlacklist -> нет ключевых параметров', JSON.stringify({
+                    phone,
+                    type_code,
+                    user_id,
+                    comment,
+                    blacklistType: !!blacklistType,
+                    user: !!user
+                }));
+                return; // ОБРЫВАЕМ,если не достаточно парметров
+            } else {
+                //this.log.debug('...', ...)
+            }
+
+            // 2. Проверка по ЧС и добавление в ЧС
+            const existsBlacklist = await this.checkPhoneByBlacklist(phone);
+
+            if (!existsBlacklist) {                           // Если номера НЕТ в ЧС
+                await this._blacklists.addNew(blacklist_ => { // Добавление в ЧС
+                    blacklist_.insertDttm = new Date();
+                    blacklist_.type = blacklistType!; // Утверждаем, что blacklistType не undefined
+                    blacklist_.phone = phone;
+                    blacklist_.user = user;
+                    blacklist_.comment = comment;
+                });
+            }
+            //// Закрываем в "Рекомендованно для ЧС"
+            ////await this.closeInRecommended(phone, comment ? comment : undefined);
+            await this.closeInRecommended(phone);
+        }
+        catch (e) {
+            this.log.exception('addToBlacklist', e);
         }
     }
 
@@ -508,49 +522,51 @@ class MainService extends Service {
         try {
             // Список временных типов ЧС (isPermanent = false)
             let backListTypesTmp = new BlackListTypes(this.context);
-            var filter = FilterBuilder.equals("isPermanent", false);
+            var filter = FilterBuilder.equals("isPermanent", false); // Временные номера
             const backListTypes = await backListTypesTmp.loadAll({ select: { filter } });
-            //this.log.debug('deleteTempPhonesFromBlacklist -> backListTypes', backListTypes);
+            this.log.debug('deleteTempPhonesFromBlacklist -> backListTypes', backListTypes);
 
-            // Список кодов временных типов ЧС
-            const codes = backListTypes.map(item => item.code);
-            //const codes: string = backListTypes.map(item => item.code).join(', ');
-            //this.log.debug('deleteTempPhonesFromBlacklist -> codes', codes);
+            if (backListTypes.length > 0) {
+                // Список кодов временных типов ЧС
+                const codes = backListTypes.map(item => item.code); // список
+                //const codes: string = backListTypes.map(item => item.code).join(', '); // строка
+                this.log.debug('deleteTempPhonesFromBlacklist -> codes', codes);
 
-            // Список вреенных номеров ЧС
-            const propertyName = 'type_code'
-            var filter: any = filterIN(propertyName, codes); // Фильтр
-            //this.log.debug('deleteTempPhonesFromBlacklist -> filter', filter);
-            const blackListsTmp = new BlackLists(this.context);
-            const blackLists = await blackListsTmp.loadAll({ select: { filter } });
-            //this.log.debug('deleteTempPhonesFromBlacklist -> blackLists', blackLists);
+                // Список временных номеров ЧС
+                const propertyName = 'type_code'
+                var filter: any = filterIN(propertyName, codes); // Фильтр
+                this.log.debug('deleteTempPhonesFromBlacklist -> filter', filter);
 
-            const currentTime = Date.now();              // Текущее время в миллисекундах            
-            const toDelete = blackLists.filter(item => { // Список номеров на удаление
-                const insertTime = new Date(item.insertDttm).getTime(); // TimeStamp из insertDttm
-                const differenceSS = (currentTime - insertTime) / 1000; // Разница во времени в секундах
-                const blockTime = backListTypes.find(type => type.code === item.type_code)?.blockTime;
-                /*
-                this.log.debug('deleteTempPhonesFromBlacklist -> ', {
-                    insertDttm: item.insertDttm,
-                    type_code: item.type_code,
-                    phone: item.phone,
-                    differenceSS,
-                    blockTime
+                const blackListsTmp = new BlackLists(this.context);
+                const blackLists = await blackListsTmp.loadAll({ select: { filter } });
+                //this.log.debug('deleteTempPhonesFromBlacklist -> blackLists', blackLists);
+
+                const currentTime = Date.now();              // Текущее время в миллисекундах            
+                const toDelete = blackLists.filter(item => { // Список номеров на удаление
+                    const insertTime = new Date(item.insertDttm).getTime(); // TimeStamp из insertDttm
+                    const differenceSS = (currentTime - insertTime) / 1000; // Разница во времени в секундах
+                    const blockTime = backListTypes.find(type => type.code === item.type_code)?.blockTime;
+                    /*
+                    this.log.debug('deleteTempPhonesFromBlacklist -> ', {
+                        insertDttm: item.insertDttm,
+                        type_code: item.type_code,
+                        phone: item.phone,
+                        differenceSS,
+                        blockTime
+                    });
+                    */
+
+                    return differenceSS >= (blockTime || 0); // Условие для удаления
                 });
-                */
 
-                return differenceSS >= (blockTime || 0); // Условие для удаления
-            });
+                // Удаление временных номеров
+                for (const item of toDelete) {
+                    await this._blacklists.deleteByID(item.id);
+                }
 
-            // Удаление временных номеров
-            for (const item of toDelete) {
-                await this._blacklists.deleteByID(item.id);
+                this.log.debug('\n-----');
+                this.log.debug('toDelete: ', toDelete);
             }
-
-            this.log.debug('\n-----');
-            this.log.debug('toDelete: ', toDelete);
-
             //await this._blacklists.deleteByID
         }
         catch (e) {
@@ -591,7 +607,6 @@ function filterIN(propertyName_: string, propertyValues_: string[]): any[] {
 
     return filter;
 }
-
 
 
 export default MainService;
