@@ -10,7 +10,7 @@ import { DataFactory, FilterBuilder } from "../../data/model";
 import { IInvocation } from "../../platform/model";
 
 class MainService extends Service {
-    
+
     constructor() {
         super("blacklist.MainService");
 
@@ -40,8 +40,7 @@ class MainService extends Service {
         this._blacklistRecommendeds.onAfterUpdate(this.afterUpdateBlacklistRecommendeds.bind(this));
 
 
-        // Дата/время для часового таймера
-        // (обновляется каждый час)
+        // Дата/время для часового таймера (обновляется каждый час)
         this._hourInterval = GlobalUtils.nowTimeStamp();
 
 
