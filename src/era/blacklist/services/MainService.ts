@@ -389,7 +389,7 @@ class MainService extends Service {
 
     // Процедура -> добавляет новый номер в "Рекомендовать для ЧС"
     async addToBlacklistRecommended(seance_id: string, phone: string, user_id: string | undefined, comment: string) {
-        //this.log.debug('addToBlacklist -> params', { phone, type_code, user_id, comment })
+        //this.log.debug('addToBlacklistRecommended -> params', { seance_id, phone, user_id, comment })
 
         try {
             let user: IRootUser | undefined;  // Пользователь
@@ -427,7 +427,7 @@ class MainService extends Service {
 
     // Процедура -> кнопки "Рекомендовать для ЧС"
     async buttonAddToBlacklistRecommended(invocation_: IInvocation) {
-        this.log.debug('buttonAddToBlacklistRecommended -> invocation_', invocation_);
+        //this.log.debug('buttonAddToBlacklistRecommended -> invocation_', invocation_);
 
         try {
             const { parameters, user_id } = invocation_.request?.request || {};
@@ -517,7 +517,7 @@ class MainService extends Service {
 
     // Процедура -> удаление временных номеров из ЧС
     async deleteTempPhonesFromBlacklist() {
-        this.log.debug('deleteTempPhonesFromBlacklist');
+        //this.log.debug('deleteTempPhonesFromBlacklist');
 
         try {
             // Список временных типов ЧС (isPermanent = false)
